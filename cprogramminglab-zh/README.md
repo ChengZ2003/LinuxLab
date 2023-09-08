@@ -396,3 +396,9 @@ void q_reverse(queue_t *q)
 
 总之，本次实验是一次非常有价值的经历，让我不仅学到了很多关于C语言和内存管理的知识，还提高了我的编程能力和问题解决能力。我相信这些经验将在今后的学习和工作中发挥重要作用，我会继续努力学习和提升自己的编程技能。
 
+### 注：
+
+本次实验代码可在如下网址找到：
+
+https://github.com/ChengZ2003/LinuxLab/tree/main/cprogramminglab-zh
+
