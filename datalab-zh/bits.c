@@ -114,6 +114,7 @@
  */
 
 #endif
+
 // 1
 /*
  * bitXor - 只使用 ~ 和 & 实现 x^y
@@ -122,6 +123,22 @@
  *   最多运算符数量: 14
  *   分值: 1
  */
+/*
+    C语言中的感叹号（!）是逻辑运算操作符。经过该操作符运算后的值只有 2 种情况，要么为 1，即 True，要么为 0，即 False。
+
+    在进行逻辑运算时，所有非 0 的值都会被认为是 True，而只有 0 值会被认为是 False。所以对变量进行 2 次非运算（!!）就能将其转化成 1 或者 0，且变量原本的逻辑值保持不变。
+
+    比如：
+
+    !!(400) = 1
+
+    !!(-200) = 1
+
+    !!(0) = 0
+
+    !!(1) = 1
+
+*/
 int bitXor(int x, int y)
 {
     // 德摩根律    x^y=
@@ -149,11 +166,11 @@ int tmin(void)
  *   分值: 1
  */
 int isTmax(int x)
-{   // v1
+{ // v1
     // 补码表示的最大值为0111 .... 1(32位)，Tmax = 0x7FFFFFFF, Tmax+1 = Tmin = 0x80000000。
     // ~(Tmax+1) = Tmax，只需判断 ~(x+1) 与 x 是否相等即可得出结论。但是，题目要求不能用等于号，于是利用 x^x = 0 的性质进行判断，即 return !~(x+1)^x。
     // 但是 -1，即 0xFFFFFFFF，进行上述操作后也满足要求，因为 0xFFFFFFFF + 1后发生了溢出，结果成了0x00000000，也满足!~(x+1)^x = 1。故要对 -1 进行单独处理。
-    return !(~(x+1)^x) & (!!((x+1) ^ 0x0));
+    return !(~(x + 1) ^ x) & (!!(x + 1));
     // v2
     // return !((~x) ^ (1<<31));(但是<<在此题不能使用，dlc:bits.c:158:isTmax: Illegal operator (<<))
 }
@@ -182,7 +199,7 @@ int allOddBits(int x)
  */
 int negate(int x)
 {
-    return ~x+1;
+    return ~x + 1;
 }
 // 3
 /*
@@ -196,7 +213,14 @@ int negate(int x)
  */
 int isAsciiDigit(int x)
 {
-    return 2;
+    // 若要满足 0x30 <= x <= 0x39，需要满足如下条件：
+    // 1.高26位全为0
+    // int cond1 = !(x >> 6);
+    // 2.第5，6位为1
+    // int cond2 = !((x >> 4) ^ 0b11);
+    // 3.低四位为 0000 - 1001
+    // int cond3 = !!(((x & 0xF) - 0xA) >> 31);
+    return !(x >> 6) & (!(0b11 ^ (x >> 4))) & ((((x & 0xF) + (~0xA) + 1) >> 31) & 1);
 }
 /*
  * conditional - 实现条件运算符 x ? y : z
@@ -207,7 +231,13 @@ int isAsciiDigit(int x)
  */
 int conditional(int x, int y, int z)
 {
-    return 2;
+    // x为真，即非0，则返回y；反之返回z
+    // 可先对x进行规格化，即!!x，若x为0，则!!x为0；反之则为1
+    // 而后对其进行先左移31位，而后右移31的操作，使其变为全1，或全0
+    int op = ((!!x) << 31) >> 31;
+    // 至此，op与~op一个为全0，一个为全1；将其与y，z进行按位与(&)操作，即可得到结果
+    // (op & y) | ((~op) & z)
+    return (op & y) | ((~op) & z);
 }
 /*
  * isLessOrEqual - 如果 x <= y  返回 1, 否则返回 0
@@ -218,7 +248,19 @@ int conditional(int x, int y, int z)
  */
 int isLessOrEqual(int x, int y)
 {
-    return 2;
+    // 若要判断 x <= y 则需要考虑如下几种情况：
+    // 1.x == y，则返回1
+    int cond1 = !(x ^ y);
+    // 取x，y的符号位并规格化
+    int signX = (x >> 31) & 1;
+    int signY = (y >> 31) & 1;
+    // 2.x为正，y为负，则返回0
+    int cond2 = (!signX) & signY;
+    // 3.x为负，y为正，则返回1
+    int cond3 = signX & (!signY);
+    // 4.x，y同号，则执行x-y，然后判断结果的符号位是否为1，若为1，则返回1；反之，返回0
+    int cond4 = ((x + ~y + 1) >> 31) & 1;
+    return cond1 | ((!cond2) & (cond3 | cond4));
 }
 // 4
 /*
@@ -230,7 +272,12 @@ int isLessOrEqual(int x, int y)
  */
 int logicalNeg(int x)
 {
-    return 2;
+    // x  = 0111;
+    // -x = 1001;
+    // 若 x 非0，x与-x按位或并将结果右移31位，则得到了全1；
+    // 若 x 为0，按照上述操作则得到全0
+    // 按照上述操作得到结果后加1，则为!x的结果
+    return (((~x + 1) | x) >> 31) + 1;
 }
 /* howManyBits - 返回补码表示 x 所需要的最少位数（复杂题，选做）
  *  例如: howManyBits(12) = 5
