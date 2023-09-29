@@ -289,10 +289,49 @@ int logicalNeg(int x)
  *  合法运算符: ! ~ & ^ | + << >>
  *  最多运算符数量: 90
  *  分值: 4
+ *
+ *      1111 -> -1
+ *      111  -> -1
+ *      11   -> -1
+ *      1    -> -1
+ *      if(x == 0)
+ *          retunrn 1;
+ *      else
+ *          {
+ *              x >0
+ *                  1 + highBit         // 0 100
+ *              x < 0
+ *                  111110001
+ *      }
+ *
  */
 int howManyBits(int x)
 {
-    return 0;
+    int isZero = !x;
+    int flag = x >> 31;
+    int mask = ((!!x) << 31) >> 31;
+    x = (flag & (~x)) | ((~flag) & x);
+    int bit_16, bit_8, bit_4, bit_2, bit_1, bit_0;
+
+    bit_16 = (!((!!(x >> 16)) ^ (0x1))) << 4;
+    x >>= bit_16;
+
+    bit_8 = (!((!!(x >> 8)) ^ (0x1))) << 3;
+    x >>= bit_8;
+
+    bit_4 = (!((!!(x >> 4)) ^ (0x1))) << 2;
+    x >>= bit_4;
+
+    bit_2 = (!((!!(x >> 2)) ^ (0x1))) << 1;
+    x >>= bit_2;
+
+    bit_1 = (!((!!(x >> 1)) ^ (0x1)));
+    x >>= bit_1;
+
+    bit_0 = x;
+    int res = bit_0 + bit_1 + bit_2 + bit_4 + bit_8 + bit_16 + 1;
+
+    return isZero | (mask & res);
 }
 // float
 /*
@@ -305,7 +344,21 @@ int howManyBits(int x)
  */
 unsigned floatScale2(unsigned uf)
 {
-    return 2;
+    unsigned s = (uf >> 31) & (0x1);
+    unsigned expr = (uf >> 23) & (0xFF);
+    unsigned frac = uf & 0x7FFFFF;
+
+    if (expr == 0 && frac == 0)
+        return uf;
+    if (expr == 0xFF)
+        return uf;
+    if (expr == 0)
+    {
+        frac <<= 1;
+        return (s << 31) | frac;
+    }
+    expr++;
+    return (s << 31) | (expr << 23) | (frac);
 }
 /*
  * floatFloat2Int - 为浮点型参数 f 返回与表达式 (int)f 等价的位级表示 （复杂题，选做）
@@ -317,7 +370,31 @@ unsigned floatScale2(unsigned uf)
  */
 int floatFloat2Int(unsigned uf)
 {
-    return 2;
+    unsigned s = (uf >> 31) & (0x1);
+    unsigned expr = (uf >> 23) & (0xFF);
+    unsigned frac = uf & 0x7FFFFF;
+
+    if (expr == 0 && frac == 0)
+        return 0;
+    if (expr == 0)
+    {
+        return 0;
+    }
+
+    int E = expr - 127;
+    frac = frac | (1 << 23);
+    if (E > 31)
+        return 1 << 31;
+    else if (E < 0)
+        return 0;
+
+    if (E >= 23)
+        frac <<= (E - 23);
+    else
+        frac >>= (23 - E);
+    if (s)
+        return ~frac + 1;
+    return frac;
 }
 /*
  * floatPower2 - 为任意的 32位 int x 返回与表达式 2.0^x (2.0 的 x 次幂) 等价的位级表示
@@ -331,5 +408,22 @@ int floatFloat2Int(unsigned uf)
  */
 unsigned floatPower2(int x)
 {
-    return 2;
+    if (x < -149)
+    {
+        return 0;
+    }
+    else if (x < -126)
+    {
+        int shift = 23 + (x + 126);
+        return 1 << shift;
+    }
+    else if (x <= 127)
+    {
+        int expr = x + 127;
+        return expr << 23;
+    }
+    else
+    {
+        return (0xFF) << 23;
+    }
 }
