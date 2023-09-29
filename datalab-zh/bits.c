@@ -307,14 +307,24 @@ int logicalNeg(int x)
  */
 int howManyBits(int x)
 {
+    // 检查x是否为0，将结果存储在isZero中
     int isZero = !x;
+
+    // 检查x的符号位（最高位），将结果存储在flag中
     int flag = x >> 31;
+
+    // 创建掩码mask
     int mask = ((!!x) << 31) >> 31;
+
+    // 将x的符号位翻转，如果x是正数，保持不变；如果是负数，变为其绝对值
     x = (flag & (~x)) | ((~flag) & x);
+
+    // 初始化用于存储各位信息的变量
     int bit_16, bit_8, bit_4, bit_2, bit_1, bit_0;
 
+    // 检查x的高16位中是否有1，如果有，bit_16为1，否则为0
     bit_16 = (!((!!(x >> 16)) ^ (0x1))) << 4;
-    x >>= bit_16;
+    x >>= bit_16; // 将x向右移动bit_16位
 
     bit_8 = (!((!!(x >> 8)) ^ (0x1))) << 3;
     x >>= bit_8;
@@ -328,9 +338,12 @@ int howManyBits(int x)
     bit_1 = (!((!!(x >> 1)) ^ (0x1)));
     x >>= bit_1;
 
+    // 最低位bit_0即为x的最低位的值
     bit_0 = x;
+    // 计算各位的总和，加上1是因为bit_0也要计数
     int res = bit_0 + bit_1 + bit_2 + bit_4 + bit_8 + bit_16 + 1;
 
+    // 将 isZero与 mask 做或运算，如果x为0，结果仍为0；如果x不为0，结果会根据掩码的情况进行修改
     return isZero | (mask & res);
 }
 // float
@@ -344,22 +357,37 @@ int howManyBits(int x)
  */
 unsigned floatScale2(unsigned uf)
 {
+    // 提取符号位（最高位），存储在s中
     unsigned s = (uf >> 31) & (0x1);
+
+    // 提取指数部分，存储在expr中
     unsigned expr = (uf >> 23) & (0xFF);
+
+    // 提取尾数部分，存储在frac中
     unsigned frac = uf & 0x7FFFFF;
 
+    // 如果指数和尾数均为0，表示浮点数为零，无需操作，直接返回
     if (expr == 0 && frac == 0)
         return uf;
+
+    // 如果指数为全1（0xFF），表示浮点数为无穷大或NaN，无需操作，直接返回
     if (expr == 0xFF)
         return uf;
+
+    // 如果指数为0，表示浮点数为非规范化数或零，将尾数左移一位
     if (expr == 0)
     {
         frac <<= 1;
-        return (s << 31) | frac;
+        return (s << 31) | frac; // 将符号位和左移后的尾数合并后返回
     }
+
+    // 对规范化数，将指数加1，实现乘以2的操作
     expr++;
+
+    // 将符号位、新指数、和尾数合并后返回
     return (s << 31) | (expr << 23) | (frac);
 }
+
 /*
  * floatFloat2Int - 为浮点型参数 f 返回与表达式 (int)f 等价的位级表示 （复杂题，选做）
  *   参数和返回值都以 unsigned int 传递, 但是它们将被解释成位级表示的单精度浮点值
@@ -370,30 +398,49 @@ unsigned floatScale2(unsigned uf)
  */
 int floatFloat2Int(unsigned uf)
 {
+    // 提取符号位（最高位），存储在s中
     unsigned s = (uf >> 31) & (0x1);
+
+    // 提取指数部分，存储在expr中
     unsigned expr = (uf >> 23) & (0xFF);
+
+    // 提取尾数部分，存储在frac中
     unsigned frac = uf & 0x7FFFFF;
 
+    // 如果指数和尾数均为0，表示浮点数为零，返回整数0
     if (expr == 0 && frac == 0)
         return 0;
+
+    // 如果指数为0，表示浮点数为非规范化数或零，返回整数0
     if (expr == 0)
     {
         return 0;
     }
 
+    // 计算指数的实际值，减去127是因为IEEE 754中的偏移
     int E = expr - 127;
+
+    // 将尾数的隐含的整数部分的1位加上，得到带有整数部分的尾数
     frac = frac | (1 << 23);
+
+    // 如果指数超过了整数表示范围（32位），返回最大整数值
     if (E > 31)
         return 1 << 31;
+    // 如果指数小于0，返回整数0
     else if (E < 0)
         return 0;
 
+    // 根据指数将带有整数部分的尾数左移或右移，以获得最终整数值
     if (E >= 23)
         frac <<= (E - 23);
     else
         frac >>= (23 - E);
+
+    // 如果符号位为1，表示负数，返回带有符号位的补码表示
     if (s)
         return ~frac + 1;
+
+    // 否则，返回带有整数值的无符号整数
     return frac;
 }
 /*
@@ -408,22 +455,32 @@ int floatFloat2Int(unsigned uf)
  */
 unsigned floatPower2(int x)
 {
+    // 如果x小于-149，表示指数太小，无法用单精度浮点数表示，返回0
     if (x < -149)
     {
         return 0;
     }
+    // 如果x介于-149和-126之间，需要进行规范化，左移尾数部分
     else if (x < -126)
     {
+        // 计算需要左移的位数，其中23是尾数的位数，x+126是偏移
         int shift = 23 + (x + 126);
+
+        // 左移得到结果，即2的x次方对应的浮点数表示
         return 1 << shift;
     }
+    // 如果x介于-126和127之间，直接计算2的x次方对应的浮点数表示
     else if (x <= 127)
     {
+        // 计算指数部分，x+127是偏移
         int expr = x + 127;
+
+        // 构建结果，左移得到2的x次方对应的浮点数表示
         return expr << 23;
     }
+    // 如果x大于等于127，表示指数太大，无法用单精度浮点数表示，返回最大正无穷
     else
     {
-        return (0xFF) << 23;
+        return (0xFF) << 23; // 0xFF表示所有位都为1，即正无穷
     }
 }
