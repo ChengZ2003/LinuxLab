@@ -137,7 +137,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
   {
       // 使用'fgpid'函数获取前台作业的进程ID
       pid_t pid = fgpid(jobs);
-  
+
       // 检查获取的进程ID是否有效（不等于0）
       if (pid != 0)
       {
@@ -146,7 +146,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
           // 这是为了终止前台作业中的所有进程
           kill(-pid, sig);
       }
-  
+
       // 从信号处理程序返回
       return;
   }
@@ -172,7 +172,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
   {
       // 使用'fgpid'函数获取前台作业的进程ID
       pid_t pid = fgpid(jobs);
-  
+
       // 检查获取的进程ID是否有效（不等于0）
       if (pid != 0)
       {
@@ -181,7 +181,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
           // 这是为了停止前台作业中的所有进程
           kill(-pid, sig);
       }
-  
+
       // 从信号处理程序返回
       return;
   }
@@ -209,7 +209,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
   {
       int status;
       pid_t pid;
-  
+
       // 循环等待所有子进程的状态变化
       while ((pid = waitpid(fgpid(jobs), &status, WNOHANG | WUNTRACED)) > 0)
       {
@@ -217,7 +217,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
           {
               // 如果子进程被暂停，则修改作业状态为停止
               getjobpid(jobs, pid)->state = ST;
-  
+
               // 获取作业ID并打印相关信息
               int jid = pid2jid(pid);
               printf("Job [%d] (%d) Stopped by signal %d\n", jid, pid, WSTOPSIG(status));
@@ -235,7 +235,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
               deletejob(jobs, pid);
           }
       }
-  
+
       // 从信号处理程序返回
       return;
   }
@@ -260,16 +260,16 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
   void waitfg(pid_t pid)
   {
       struct job_t *job;
-  
+
       // 获取具有给定进程ID的作业信息
       job = getjobpid(jobs, pid);
-  
+
       // 检查进程ID是否有效
       if (pid == 0)
       {
           return;
       }
-  
+
       // 如果作业信息存在
       if (job != NULL)
       {
@@ -280,7 +280,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
               // 此循环通过持续检查前台作业的进程ID是否仍然等于给定的进程ID来等待作业结束
           }
       }
-  
+
       // 从函数返回
       return;
   }
@@ -328,7 +328,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
           do_bgfg(argv);
           return 1;
       }
-  
+
       // 如果命令不是内置命令，返回 0
       return 0;
   }
@@ -361,16 +361,16 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
       char *tmp;
       int jid;
       pid_t pid;
-  
+
       // 获取命令中的参数
       tmp = argv[1];
-  
+
       // 如果参数不存在
       if(tmp == NULL) {
           printf("%s command requires PID or %%jobid argument\n", argv[0]);
           return;
       }
-  
+
       // 如果是作业号（jid）
       if(tmp[0] == '%') {
           jid = atoi(&tmp[1]);
@@ -402,13 +402,13 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
           printf("%s: argument must be a PID or %%jobid\n", argv[0]);
           return;
       }
-  
+
       // 向指定进程组发送 SIGCONT 信号，以恢复作业执行
       if (kill(-pid, SIGCONT) < 0) {
           perror("kill");
           return;
       }
-  
+
       // 如果是 fg 命令
       if(!strcmp("fg", argv[0])) {
           // 将作业状态设置为前台运行
@@ -456,7 +456,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
   {
       // 使用'fgpid'函数获取前台作业的进程ID
       pid_t pid = fgpid(jobs);
-  
+
       // 检查获取的进程ID是否有效（不等于0）
       if (pid != 0)
       {
@@ -465,7 +465,7 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
           // 这是为了停止前台作业中的所有进程
           kill(-pid, sig);
       }
-  
+
       // 从信号处理程序返回
       return;
   }
@@ -531,7 +531,9 @@ int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 
 总的来说，这个实验使我更深入地了解了操作系统中的一些核心概念和技术，并提升了我的编程和调试能力。通过不断克服问题和挑战，我更加自信地处理了复杂的系统编程任务。
 
+本次实验代码可在如下网址找到：
 
+https://github.com/ChengZ2003/LinuxLab/tree/main/shlab-handout
 
 
 
