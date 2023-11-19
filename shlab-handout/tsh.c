@@ -352,65 +352,58 @@ void do_bgfg(char **argv)
     tmp = argv[1];
 
     // 如果参数不存在
-    if (tmp == NULL)
-    {
+    if(tmp == NULL) {
         printf("%s command requires PID or %%jobid argument\n", argv[0]);
         return;
     }
 
     // 如果是作业号（jid）
-    if (tmp[0] == '%')
-    {
+    if(tmp[0] == '%') {
         jid = atoi(&tmp[1]);
         // 获取指定作业
         job = getjobjid(jobs, jid);
         // 如果作业不存在
-        if (job == NULL)
-        {
+        if(job == NULL){
             printf("%s: No such job\n", tmp);
             return;
-        }
-        else
-        {
+        } else {
             // 获取该作业的进程ID，以备后续使用
             pid = job->pid;
         }
     }
     // 如果是进程ID（pid）
-    else if (isdigit(tmp[0]))
-    {
+    else if(isdigit(tmp[0])) {
         // 获取进程ID
         pid = atoi(tmp);
         // 获取指定进程的作业信息
         job = getjobpid(jobs, pid);
         // 如果作业不存在
-        if (job == NULL)
-        {
+        if(job == NULL){
             printf("(%d): No such process\n", pid);
             return;
         }
     }
     // 如果参数格式不正确
-    else
-    {
+    else {
         printf("%s: argument must be a PID or %%jobid\n", argv[0]);
         return;
     }
 
     // 向指定进程组发送 SIGCONT 信号，以恢复作业执行
-    kill(-pid, SIGCONT);
+    if (kill(-pid, SIGCONT) < 0) {
+        perror("kill");
+        return;
+    }
 
     // 如果是 fg 命令
-    if (!strcmp("fg", argv[0]))
-    {
+    if(!strcmp("fg", argv[0])) {
         // 将作业状态设置为前台运行
         job->state = FG;
         // 等待前台作业结束
         waitfg(job->pid);
     }
     // 如果是 bg 命令
-    else
-    {
+    else {
         // 打印后台运行的作业信息
         printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
         // 将作业状态设置为后台运行
